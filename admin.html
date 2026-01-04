@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Panel Admin - Postulaciones</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+body{
+  background:#0f1115;
+  color:white;
+  font-family:Arial;
+  padding:20px;
+}
+.card{
+  border:1px solid #444;
+  border-radius:10px;
+  padding:15px;
+  margin-bottom:15px;
+}
+</style>
+</head>
+<body>
+
+<h1>📋 Postulaciones recibidas</h1>
+<div id="lista"></div>
+
+<script>
+// 🔹 CAMBIA SOLO ESTO
+const supabaseUrl = "https://bvbneelfosacutwhjzhx.supabase.co";
+const supabaseKey = "PEGA_AQUI_TU_CLAVE_PUBLICA"; // anon / publishable
+const supabase = supabaseJs.createClient(supabaseUrl, supabaseKey);
+
+// 🔹 CARGAR POSTULACIONES
+async function verPostulaciones(){
+  const { data, error } = await supabase
+    .from('postulaciones')
+    .select('*')
+    .order('created_at', { ascending: false });
+
+  if(error){
+    document.getElementById("lista").innerHTML = "❌ Error al cargar";
+    console.error(error);
+    return;
+  }
+
+  const div = document.getElementById("lista");
+  div.innerHTML = "";
+
+  data.forEach(p => {
+    div.innerHTML += `
+      <div class="card">
+        <b>Discord:</b> ${p.discord}<br>
+        <b>Motivo:</b> ${p.motivo}<br>
+        <b>Tiempo:</b> ${p.tiempo}<br>
+        <b>Experiencia:</b> ${p.experiencia}<br>
+        <small>${p.created_at}</small>
+      </div>
+    `;
+  });
+}
+
+verPostulaciones();
+</script>
+
+</body>
+</html>
