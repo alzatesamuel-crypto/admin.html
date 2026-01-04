@@ -2,36 +2,28 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<title>Panel Admin – The Blaze</title>
+<title>Panel Postulaciones – The Blaze</title>
+
 <style>
-body{font-family:Arial;background:#0e0e0e;color:#fff;padding:20px}
+body{font-family:Arial;background:#0d0d0d;color:#fff;padding:20px}
 section{border:1px solid #333;padding:15px;margin-bottom:20px}
-button{margin:5px;padding:8px}
-.accept{background:#2ea043;color:#fff}
-.cancel{background:#d73a49;color:#fff}
-.delete{background:#6e7681;color:#fff}
+button{margin:5px;padding:6px 10px;cursor:pointer}
+.accept{background:#2ea043;color:white}
+.cancel{background:#d73a49;color:white}
+.delete{background:#6e7681;color:white}
+.control{background:#5865f2;color:white}
 </style>
 </head>
 <body>
 
-<h1>Panel Admin – The Blaze Java 1.21</h1>
+<h1>Panel Postulaciones – The Blaze Java 1.21</h1>
 <p>#3 Parcelas</p>
 
-<!-- LOGIN -->
-<div id="login">
-  <input id="email" placeholder="Email"><br><br>
-  <input id="password" type="password" placeholder="Contraseña"><br><br>
-  <button onclick="login()">Entrar</button>
-</div>
-
-<!-- PANEL -->
-<div id="panel" style="display:none">
-
 <section>
-<h2>🔴 Control de Postulaciones</h2>
-<p id="estado"></p>
-<button onclick="toggle()">Abrir / Cerrar postulaciones</button>
-<button onclick="abrirPublica()">Abrir página postulaciones</button>
+<h2>⚙️ Control</h2>
+<p id="estado">Cargando...</p>
+<button class="control" onclick="toggle()">Abrir / Cerrar postulaciones</button>
+<button class="control" onclick="abrirPublica()">Abrir página postulaciones</button>
 </section>
 
 <section>
@@ -49,9 +41,6 @@ button{margin:5px;padding:8px}
 <div id="canceladas"></div>
 </section>
 
-<button onclick="logout()">Cerrar sesión</button>
-</div>
-
 <script type="module">
 import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm";
 
@@ -60,26 +49,7 @@ const supabase = createClient(
   "sb_publishable_8QluYXwqMPxYWszgJlCbzw_EdakwSl-"
 );
 
-// 🔐 sesión
-async function check(){
-  const { data:{session} } = await supabase.auth.getSession();
-  if(session){
-    login.style.display="none";
-    panel.style.display="block";
-    cargarTodo();
-  }
-}
-check();
-
-window.login = async ()=>{
-  const { error } = await supabase.auth.signInWithPassword({
-    email: email.value,
-    password: password.value
-  });
-  if(!error) check();
-};
-
-// 🔄 cargar estado abierto/cerrado
+// ----- ESTADO ABIERTO / CERRADO -----
 async function cargarEstado(){
   const { data } = await supabase
     .from("config")
@@ -87,12 +57,10 @@ async function cargarEstado(){
     .eq("key","soporte_abierto")
     .single();
 
-  estado.textContent = data.value
-    ? "🟢 Postulaciones ABIERTAS"
-    : "🔴 Postulaciones CERRADAS";
+  document.getElementById("estado").textContent =
+    data.value ? "🟢 Postulaciones ABIERTAS" : "🔴 Postulaciones CERRADAS";
 }
 
-// 🔁 abrir / cerrar
 window.toggle = async ()=>{
   const { data } = await supabase
     .from("config")
@@ -108,7 +76,7 @@ window.toggle = async ()=>{
   cargarEstado();
 };
 
-// 📂 cargar postulaciones
+// ----- CARGAR POSTULACIONES -----
 async function cargar(tipo, contenedor){
   const { data } = await supabase
     .from("postulaciones")
@@ -116,54 +84,52 @@ async function cargar(tipo, contenedor){
     .eq("estado", tipo)
     .order("id",{ascending:false});
 
-  contenedor.innerHTML="";
+  contenedor.innerHTML = "";
   data.forEach(p=>{
     contenedor.innerHTML += `
-      <div>
+      <div style="border-bottom:1px solid #333;padding:6px">
         <b>${p.discord}</b>
-        <button class="accept" onclick="cambiar(${p.id},'aceptada')">Aceptar</button>
-        <button class="cancel" onclick="cambiar(${p.id},'cancelada')">Cancelar</button>
-        ${tipo==="cancelada"
-          ? `<button class="delete" onclick="borrar(${p.id})">Borrar</button>`
-          : ""}
-      </div>`;
+        ${tipo==="pendiente" ? `
+          <button class="accept" onclick="cambiar(${p.id},'aceptada')">Aceptar</button>
+          <button class="cancel" onclick="cambiar(${p.id},'cancelada')">Cancelar</button>
+        ` : ""}
+        ${tipo==="cancelada" ? `
+          <button class="delete" onclick="borrar(${p.id})">Borrar</button>
+        ` : ""}
+      </div>
+    `;
   });
 }
 
-// 🔁 cambiar estado
 window.cambiar = async (id, estado)=>{
-  await supabase.from("postulaciones")
+  await supabase
+    .from("postulaciones")
     .update({ estado })
     .eq("id",id);
   cargarTodo();
 };
 
-// 🗑️ borrar
-window.borrar = async id =>{
-  await supabase.from("postulaciones")
+window.borrar = async id=>{
+  await supabase
+    .from("postulaciones")
     .delete()
     .eq("id",id);
   cargarTodo();
 };
 
-// 🔄 cargar todo
 function cargarTodo(){
   cargarEstado();
-  cargar("pendiente", pendientes);
-  cargar("aceptada", aceptadas);
-  cargar("cancelada", canceladas);
+  cargar("pendiente", document.getElementById("pendientes"));
+  cargar("aceptada", document.getElementById("aceptadas"));
+  cargar("cancelada", document.getElementById("canceladas"));
 }
 
-// 🌐 abrir página pública
+// ----- ABRIR PÁGINA PÚBLICA -----
 window.abrirPublica = ()=>{
   window.open("postulaciones-blaze.html","_blank");
 };
 
-// 🚪 logout
-window.logout = async ()=>{
-  await supabase.auth.signOut();
-  location.reload();
-};
+cargarTodo();
 </script>
 
 </body>
