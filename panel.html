@@ -8,13 +8,21 @@
 
 <h2>Panel Administrador</h2>
 
-<p id="estado">Cargando...</p>
-<button onclick="toggle()">Abrir / Cerrar postulaciones</button>
+<div id="login">
+  <input id="email" placeholder="Email"><br><br>
+  <input id="password" type="password" placeholder="Contraseña"><br><br>
+  <button onclick="login()">Entrar</button>
+</div>
 
-<h3>Postulaciones</h3>
-<div id="lista"></div>
+<div id="panel" style="display:none">
+  <p id="estado"></p>
+  <button onclick="toggle()">Abrir / Cerrar postulaciones</button>
 
-<button onclick="logout()">Cerrar sesión</button>
+  <h3>Postulaciones</h3>
+  <div id="lista"></div>
+
+  <button onclick="logout()">Cerrar sesión</button>
+</div>
 
 <script type="module">
 import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm";
@@ -24,9 +32,25 @@ const supabase = createClient(
   "sb_publishable_8QluYXwqMPxYWszgJlCbzw_EdakwSl-"
 );
 
-// proteger panel
-const { data:{session} } = await supabase.auth.getSession();
-if(!session) location.href="admin.html";
+async function checkSession(){
+  const { data:{session} } = await supabase.auth.getSession();
+  if(session){
+    document.getElementById("login").style.display="none";
+    document.getElementById("panel").style.display="block";
+    cargarEstado();
+    cargarPostulaciones();
+  }
+}
+checkSession();
+
+window.login = async ()=>{
+  const email = email.value;
+  const password = password.value;
+
+  const { error } = await supabase.auth.signInWithPassword({ email, password });
+  if(error) alert("Login incorrecto");
+  else checkSession();
+};
 
 async function cargarEstado(){
   const { data } = await supabase
@@ -39,7 +63,7 @@ async function cargarEstado(){
     data.value ? "🟢 ABIERTAS" : "🔴 CERRADAS";
 }
 
-window.toggle = async () =>{
+window.toggle = async ()=>{
   const { data } = await supabase
     .from("config")
     .select("value")
@@ -54,26 +78,27 @@ window.toggle = async () =>{
   cargarEstado();
 };
 
-const { data } = await supabase
-  .from("postulaciones")
-  .select("*")
-  .order("id",{ascending:false});
+async function cargarPostulaciones(){
+  const { data } = await supabase
+    .from("postulaciones")
+    .select("*")
+    .order("id",{ascending:false});
 
-const lista = document.getElementById("lista");
-data.forEach(p=>{
-  lista.innerHTML += `
-    <div style="border:1px solid #555;padding:10px;margin:10px">
-      <b>${p.discord}</b><br>${p.motivo}
-    </div>
-  `;
-});
+  const lista = document.getElementById("lista");
+  lista.innerHTML="";
+  data.forEach(p=>{
+    lista.innerHTML+=`
+      <div style="border:1px solid #444;padding:10px;margin:10px">
+        <b>${p.discord}</b><br>${p.motivo}
+      </div>`;
+  });
+}
 
 window.logout = async ()=>{
   await supabase.auth.signOut();
-  location.href="admin.html";
+  location.reload();
 };
-
-cargarEstado();
 </script>
+
 </body>
 </html>
