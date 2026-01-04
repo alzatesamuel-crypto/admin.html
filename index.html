@@ -1,68 +1,106 @@
-
 <!DOCTYPE html>
 <html lang="es">
 <head>
-<meta charset="UTF-8">
-<title>Panel Admin - Postulaciones</title>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<style>
-body{
-  background:#0f1115;
-  color:white;
-  font-family:Arial;
-  padding:20px;
-}
-.card{
-  border:1px solid #444;
-  border-radius:10px;
-  padding:15px;
-  margin-bottom:15px;
-}
-</style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Postulaciones</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f4f4f4;
+      margin: 0;
+      padding: 20px;
+    }
+
+    h1 {
+      text-align: center;
+      color: #333;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+      background-color: #fff;
+      box-shadow: 0 0 5px rgba(0,0,0,0.1);
+    }
+
+    th, td {
+      padding: 12px;
+      text-align: left;
+      border-bottom: 1px solid #ddd;
+    }
+
+    th {
+      background: linear-gradient(to right, #6a11cb, #2575fc);
+      color: white;
+    }
+
+    tr:hover {
+      background-color: #f1f1f1;
+    }
+  </style>
 </head>
 <body>
 
-<h1>📋 Postulaciones recibidas</h1>
-<div id="lista"></div>
+<h1>Postulaciones</h1>
 
+<table id="tablaPostulaciones">
+  <tr>
+    <th>Nombre</th>
+    <th>Discord</th>
+    <th>Experiencia</th>
+  </tr>
+</table>
+
+<!-- Importamos Supabase JS -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/supabase.min.js"></script>
 <script>
-// 🔹 CAMBIA SOLO ESTO
-const supabaseUrl = "https://bvbneelfosacutwhjzhx.supabase.co";
-const supabaseKey = "sb_publishable_8QluYXwqMPxYWszgJlCbzw_EdakwSl-"; // anon / publishable
-const supabase = supabaseJs.createClient(supabaseUrl, supabaseKey);
+  // Configuración Supabase
+  const supabaseUrl = "https://bvbneelfosacutwhjzhx.supabase.co";
+  const supabaseKey = "sb_publishable_8QluYXwqMPxYWszgJlCbzw_EdakwSl-"; // clave anon/publicable
+  const supabase = supabase.createClient(supabaseUrl, supabaseKey);
 
-// 🔹 CARGAR POSTULACIONES
-async function verPostulaciones(){
-  const { data, error } = await supabase
-    .from('postulaciones')
-    .select('*')
-    .order('created_at', { ascending: false });
+  // Función para cargar postulaciones
+  async function cargarPostulaciones() {
+    const { data, error } = await supabase
+      .from('postulaciones')
+      .select('*');
 
-  if(error){
-    document.getElementById("lista").innerHTML = "❌ Error al cargar";
-    console.error(error);
-    return;
+    if (error) {
+      console.error("Error al cargar postulaciones:", error);
+      return;
+    }
+
+    // Seleccionamos la tabla
+    const tabla = document.getElementById('tablaPostulaciones');
+
+    // Limpiamos filas viejas (excepto encabezado)
+    tabla.innerHTML = `
+      <tr>
+        <th>Nombre</th>
+        <th>Discord</th>
+        <th>Experiencia</th>
+      </tr>
+    `;
+
+    // Agregamos cada postulación
+    data.forEach(post => {
+      const fila = document.createElement('tr');
+      fila.innerHTML = `
+        <td>${post.nombre ?? ''}</td>
+        <td>${post.discord ?? ''}</td>
+        <td>${post.experiencia ?? ''}</td>
+      `;
+      tabla.appendChild(fila);
+    });
   }
 
-  const div = document.getElementById("lista");
-  div.innerHTML = "";
-
-  data.forEach(p => {
-    div.innerHTML += `
-      <div class="card">
-        <b>Discord:</b> ${p.discord}<br>
-        <b>Motivo:</b> ${p.motivo}<br>
-        <b>Tiempo:</b> ${p.tiempo}<br>
-        <b>Experiencia:</b> ${p.experiencia}<br>
-        <small>${p.created_at}</small>
-      </div>
-    `;
-  });
-}
-
-verPostulaciones();
+  // Ejecutamos al cargar la página
+  cargarPostulaciones();
 </script>
 
 </body>
 </html>
+
 
