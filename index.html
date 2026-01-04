@@ -11,12 +11,10 @@
       margin: 0;
       padding: 20px;
     }
-
     h1 {
       text-align: center;
       color: #333;
     }
-
     table {
       width: 100%;
       border-collapse: collapse;
@@ -24,18 +22,15 @@
       background-color: #fff;
       box-shadow: 0 0 5px rgba(0,0,0,0.1);
     }
-
     th, td {
       padding: 12px;
       text-align: left;
       border-bottom: 1px solid #ddd;
     }
-
     th {
       background: linear-gradient(to right, #6a11cb, #2575fc);
       color: white;
     }
-
     tr:hover {
       background-color: #f1f1f1;
     }
@@ -47,56 +42,61 @@
 
 <table id="tablaPostulaciones">
   <tr>
-    <th>Nombre</th>
+    <th>ID</th>
     <th>Discord</th>
+    <th>Motivo</th>
+    <th>Tiempo</th>
     <th>Experiencia</th>
+    <th>Rango</th>
+    <th>Fecha</th>
   </tr>
 </table>
 
-<!-- Importamos Supabase JS -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/supabase.min.js"></script>
 <script>
-  // Configuración Supabase
   const supabaseUrl = "https://bvbneelfosacutwhjzhx.supabase.co";
-  const supabaseKey = "sb_publishable_8QluYXwqMPxYWszgJlCbzw_EdakwSl-"; // clave anon/publicable
+  const supabaseKey = "sb_publishable_8QluYXwqMPxYWszgJlCbzw_EdakwSl-";
   const supabase = supabase.createClient(supabaseUrl, supabaseKey);
 
-  // Función para cargar postulaciones
   async function cargarPostulaciones() {
     const { data, error } = await supabase
       .from('postulaciones')
-      .select('*');
+      .select('*')
+      .order('created_at', { ascending: false });
 
     if (error) {
       console.error("Error al cargar postulaciones:", error);
       return;
     }
 
-    // Seleccionamos la tabla
     const tabla = document.getElementById('tablaPostulaciones');
-
-    // Limpiamos filas viejas (excepto encabezado)
     tabla.innerHTML = `
       <tr>
-        <th>Nombre</th>
+        <th>ID</th>
         <th>Discord</th>
+        <th>Motivo</th>
+        <th>Tiempo</th>
         <th>Experiencia</th>
+        <th>Rango</th>
+        <th>Fecha</th>
       </tr>
     `;
 
-    // Agregamos cada postulación
     data.forEach(post => {
       const fila = document.createElement('tr');
       fila.innerHTML = `
-        <td>${post.nombre ?? ''}</td>
+        <td>${post.id}</td>
         <td>${post.discord ?? ''}</td>
+        <td>${post.motivo ?? ''}</td>
+        <td>${post.tiempo ?? ''}</td>
         <td>${post.experiencia ?? ''}</td>
+        <td>${post.rango ?? ''}</td>
+        <td>${new Date(post.created_at).toLocaleString()}</td>
       `;
       tabla.appendChild(fila);
     });
   }
 
-  // Ejecutamos al cargar la página
   cargarPostulaciones();
 </script>
 
