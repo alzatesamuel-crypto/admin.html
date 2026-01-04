@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Panel Admin</title>
+</head>
+<body>
+
+<h2>Panel Administrador</h2>
+
+<p id="estado">Cargando...</p>
+<button onclick="toggle()">Abrir / Cerrar postulaciones</button>
+
+<h3>Postulaciones</h3>
+<div id="lista"></div>
+
+<button onclick="logout()">Cerrar sesión</button>
+
+<script type="module">
+import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm";
+
+const supabase = createClient(
+  "https://bvbneelfosacutwhjzhx.supabase.co",
+  "sb_publishable_8QluYXwqMPxYWszgJlCbzw_EdakwSl-"
+);
+
+// proteger panel
+const { data:{session} } = await supabase.auth.getSession();
+if(!session) location.href="admin.html";
+
+async function cargarEstado(){
+  const { data } = await supabase
+    .from("config")
+    .select("value")
+    .eq("key","soporte_abierto")
+    .single();
+
+  document.getElementById("estado").textContent =
+    data.value ? "🟢 ABIERTAS" : "🔴 CERRADAS";
+}
+
+window.toggle = async () =>{
+  const { data } = await supabase
+    .from("config")
+    .select("value")
+    .eq("key","soporte_abierto")
+    .single();
+
+  await supabase
+    .from("config")
+    .update({ value: !data.value })
+    .eq("key","soporte_abierto");
+
+  cargarEstado();
+};
+
+const { data } = await supabase
+  .from("postulaciones")
+  .select("*")
+  .order("id",{ascending:false});
+
+const lista = document.getElementById("lista");
+data.forEach(p=>{
+  lista.innerHTML += `
+    <div style="border:1px solid #555;padding:10px;margin:10px">
+      <b>${p.discord}</b><br>${p.motivo}
+    </div>
+  `;
+});
+
+window.logout = async ()=>{
+  await supabase.auth.signOut();
+  location.href="admin.html";
+};
+
+cargarEstado();
+</script>
+</body>
+</html>
